@@ -459,3 +459,18 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .auth-side-art { display: none; }
   .cloud-error { bottom: 70px; right: 10px; width: calc(100% - 20px); }
 }
+@media (max-width: 600px) {
+  body { overflow-x: hidden; }
+  .main-area { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  .mobile-nav {
+    height: calc(61px + env(safe-area-inset-bottom));
+    padding: 5px 3px env(safe-area-inset-bottom);
+  }
+  .mobile-nav button {
+    min-width: 0;
+    gap: 2px;
+    font-size: clamp(6px, 1.85vw, 7px);
+    white-space: nowrap;
+  }
+  .mobile-nav button span { font-size: clamp(15px, 4.6vw, 17px); }
+}

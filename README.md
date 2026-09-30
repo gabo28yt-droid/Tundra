@@ -1,4 +1,4 @@
-# MyAssistantIA
+# Tundra
 
 Aplicación de organización con React, Vite, Firebase Authentication y Cloud Firestore. Cada persona puede registrarse con correo y contraseña o iniciar sesión con Google. Sus tareas, eventos, rutinas, movimientos, racha de estudio y preferencias de Pomodoro se sincronizan en documentos privados asociados a su UID de Firebase.
 
@@ -16,6 +16,8 @@ npm run dev
 
 La configuración local de Firebase está en `.env.local`, excluido de Git. Para otra instalación, copia `.env.example` a `.env.local` y completa los valores de **Firebase Console > Project settings > Your apps**. Reinicia Vite después de editar variables.
 
+El sitio de GitHub Pages se publica en `https://gabo28yt-droid.github.io/Tundra/` mediante el flujo de GitHub Actions incluido. Para que Firebase también funcione en ese despliegue, agrega las variables `VITE_FIREBASE_*` de `.env.example` como **Actions secrets** en `Settings > Secrets and variables > Actions` del repositorio.
+
 ## Activar Firebase
 
 1. En **Firebase Console > Authentication > Sign-in method**, habilita **Email/Password** y **Google**.
@@ -28,6 +30,8 @@ La configuración local de Firebase está en `.env.local`, excluido de Git. Para
    ```
 
 Las reglas solo permiten que cada usuario lea y escriba debajo de `users/{su-uid}`. No reemplaces estas reglas por acceso público. La clave web de Firebase identifica el proyecto, pero los permisos de los datos los aplican Authentication y las reglas de Firestore.
+
+Para GitHub Pages, añade también `gabo28yt-droid.github.io` a los dominios autorizados de Firebase Authentication.
 
 El registro por correo envía un enlace de verificación. La sección de estudio acepta archivos `.txt` y `.md` de hasta 2 MB y genera resumen/tarjetas localmente; todavía no utiliza un servicio de IA ni sube los documentos.
 

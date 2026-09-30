@@ -174,8 +174,8 @@ function PersonalApp({ user }) {
     <div className="app-shell">
       <aside className="sidebar">
         <a className="brand" href="#" onClick={(event) => { event.preventDefault(); navigate("inicio"); }}>
-          <span className="brand-mark">m<span>✦</span></span>
-          <span className="brand-name">my<span>assistant</span><small>IA · tu espacio personal</small></span>
+          <span className="brand-mark">T<span>✦</span></span>
+          <span className="brand-name">Tundra<small>tu espacio personal</small></span>
         </a>
         <div className="side-label">MENÚ PRINCIPAL</div>
         <nav className="navigation" aria-label="Navegación principal">
@@ -228,9 +228,9 @@ function PersonalApp({ user }) {
         notify("¡Listo! Se guardó correctamente.");
       }} />}
       {toast && <div className="toast"><span>✓</span>{toast}</div>}
-      <div className="mobile-nav">
-        {NAV_ITEMS.slice(0, 5).map((item) => <button key={item.id} onClick={() => navigate(item.id)} className={active === item.id ? "active" : ""}><span>{item.icon}</span>{item.label}</button>)}
-      </div>
+      <nav className="mobile-nav" aria-label="Navegación principal">
+        {NAV_ITEMS.map((item) => <button key={item.id} onClick={() => navigate(item.id)} className={active === item.id ? "active" : ""} aria-current={active === item.id ? "page" : undefined}><span>{item.icon}</span>{item.label}</button>)}
+      </nav>
       <span className="sr-only">{todayKey}</span>
     </div>
   );
@@ -333,7 +333,7 @@ function AuthPage({ configurationMissing = false, externalError = "" }) {
 }
 
 function Brand() {
-  return <a className="brand auth-brand" href="#" onClick={(event) => event.preventDefault()}><span className="brand-mark">m<span>✦</span></span><span className="brand-name">my<span>assistant</span><small>IA · tu espacio personal</small></span></a>;
+  return <a className="brand auth-brand" href="#" onClick={(event) => event.preventDefault()}><span className="brand-mark">T<span>✦</span></span><span className="brand-name">Tundra<small>tu espacio personal</small></span></a>;
 }
 
 function GoogleMark() {
@@ -603,7 +603,7 @@ function EntryModal({ type, onClose, onSave }) {
     if (type === "transaction") onSave({ title: form.title.trim(), type: form.transactionType, category: form.category, amount: Number(form.amount), date: form.date });
   }
   const weekdays = ["L", "M", "M", "J", "V", "S", "D"];
-  return <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><form className="entry-modal" onSubmit={submit}><button type="button" className="modal-close" onClick={onClose}>×</button><span className="eyebrow">MYASSISTANTIA</span><h2>{config.title}</h2><p>{config.description}</p>
+  return <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><form className="entry-modal" onSubmit={submit}><button type="button" className="modal-close" onClick={onClose}>×</button><span className="eyebrow">TUNDRA</span><h2>{config.title}</h2><p>{config.description}</p>
     <label className="field-label">Nombre<input autoFocus required value={form.title} onChange={(event) => update("title", event.target.value)} placeholder="¿Qué tienes en mente?" /></label>
     {type === "task" && <><div className="field-row"><label className="field-label">Categoría<select value={form.category} onChange={(event) => update("category", event.target.value)}>{CATEGORIES.map((item) => <option key={item}>{item}</option>)}</select></label><label className="field-label">Prioridad<select value={form.priority} onChange={(event) => update("priority", event.target.value)}><option>Alta</option><option>Media</option><option>Baja</option></select></label></div><label className="field-label">Fecha<input type="date" value={form.due} onChange={(event) => update("due", event.target.value)} /></label></>}
     {type === "event" && <><div className="field-row"><label className="field-label">Fecha<input type="date" value={form.date} onChange={(event) => update("date", event.target.value)} /></label><label className="field-label">Repetir<select value={form.repeat} onChange={(event) => update("repeat", event.target.value)}><option>Nunca</option><option>Diario</option><option>Semanal</option><option>Mensual</option></select></label></div><div className="field-row"><label className="field-label">Inicio<input type="time" value={form.start} onChange={(event) => update("start", event.target.value)} /></label><label className="field-label">Fin<input type="time" value={form.end} onChange={(event) => update("end", event.target.value)} /></label></div><label className="field-label">Nota (opcional)<input value={form.note} onChange={(event) => update("note", event.target.value)} placeholder="Ej. Llevar materiales" /></label></>}
