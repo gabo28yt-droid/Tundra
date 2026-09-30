@@ -333,7 +333,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .timer-inner > span { color: #a7a0af; font-size: 8px; letter-spacing: 1.1px; }
 .timer-inner > strong { font: 600 51px Manrope,sans-serif; letter-spacing: -2px; margin: 4px 0; color: #292633; }
 .timer-inner > small { color: #aaa6b2; font-size: 9px; }
-.timer-play { width: 47px; height: 47px; display: grid; place-items: center; border: 0; border-radius: 50%; color: white; background: #8161d7; box-shadow: 0 6px 13px #8061d74a; margin-top: 16px; cursor: pointer; font-size: 16px; }
+.timer-play { min-width: 88px; height: 42px; display: grid; place-items: center; border: 0; border-radius: 24px; padding: 0 18px; color: white; background: #8161d7; box-shadow: 0 6px 13px #8061d74a; margin-top: 16px; cursor: pointer; font-size: 11px; font-weight: 600; }
 .timer-reset { border: 0; color: #9f9aa7; background: transparent; font-size: 9px; cursor: pointer; }
 .timer-progress { border-top: 1px solid #f3f1f6; padding: 15px 4px 0; display: flex; align-items: center; justify-content: space-between; }
 .timer-progress > div:not(.cycle-dots) { display: grid; gap: 3px; }.timer-progress strong { font: 700 12px Manrope,sans-serif; }.timer-progress strong small { color: #aaa6b2; font: 500 8px "DM Sans",sans-serif; }.timer-progress span { color: #aaa6b2; font-size: 8px; }

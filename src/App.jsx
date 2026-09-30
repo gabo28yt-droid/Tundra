@@ -212,7 +212,7 @@ function PersonalApp({ user }) {
           {active === "calendario" && <CalendarPage events={events} setEvents={setEvents} tasks={tasks} selectedDate={selectedDate} setSelectedDate={setSelectedDate} onAdd={() => setModal("event")} />}
           {active === "rutinas" && <RoutinesPage routines={routines} setRoutines={setRoutines} onAdd={() => setModal("routine")} />}
           {active === "finanzas" && <FinancePage transactions={transactions} onAdd={() => setModal("transaction")} />}
-          {active === "pomodoro" && <PomodoroPage settings={timerSettings} setSettings={setTimerSettings} notify={notify} />}
+          <div hidden={active !== "pomodoro"}><PomodoroPage settings={timerSettings} setSettings={setTimerSettings} notify={notify} /></div>
           {active === "estudio" && <StudyPage streak={studyStreak} setStreak={setStudyStreak} studiedToday={studyDate} setStudiedToday={setStudyDate} notify={notify} />}
         </div>
         {cloudError && <div className="cloud-error" role="alert"><strong>No se pudieron sincronizar tus datos.</strong><span>Revisa que Firestore esté habilitado y que las reglas de <code>firestore.rules</code> estén publicadas. {cloudError}</span></div>}
@@ -501,51 +501,100 @@ function FinancePage({ transactions, onAdd }) {
   </>;
 }
 function PomodoroPage({ settings, setSettings, notify }) {
+  const safeSettings = {
+    focus: Math.min(180, Math.max(1, Number(settings?.focus) || 25)),
+    short: Math.min(60, Math.max(1, Number(settings?.short) || 5)),
+    long: Math.min(90, Math.max(1, Number(settings?.long) || 15)),
+    cycles: Math.min(8, Math.max(2, Number(settings?.cycles) || 3)),
+  };
   const [mode, setMode] = useState("focus");
-  const [secondsLeft, setSecondsLeft] = useState(settings.focus * 60);
+  const [secondsLeft, setSecondsLeft] = useState(safeSettings.focus * 60);
   const [running, setRunning] = useState(false);
   const [cycles, setCycles] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
   const [completion, setCompletion] = useState("");
   const [preset, setPreset] = useState("25 / 5");
-  const longBreak = cycles > 0 && cycles % settings.cycles === 0;
-  const breakMinutes = longBreak ? settings.long : settings.short;
-  const totalSeconds = (mode === "focus" ? settings.focus : breakMinutes) * 60;
+  const deadlineRef = useRef(null);
+  const completionHandledRef = useRef(false);
+  const longBreak = cycles > 0 && cycles % safeSettings.cycles === 0;
+  const breakMinutes = longBreak ? safeSettings.long : safeSettings.short;
+  const totalSeconds = (mode === "focus" ? safeSettings.focus : breakMinutes) * 60;
   useEffect(() => {
     if (!running) return undefined;
-    const timer = window.setInterval(() => setSecondsLeft((seconds) => Math.max(0, seconds - 1)), 1000);
+    if (deadlineRef.current === null) deadlineRef.current = Date.now() + secondsLeft * 1000;
+    const updateCountdown = () => {
+      if (deadlineRef.current === null || completionHandledRef.current) return;
+      const remaining = Math.max(0, Math.ceil((deadlineRef.current - Date.now()) / 1000));
+      setSecondsLeft(remaining);
+      if (remaining > 0) return;
+      completionHandledRef.current = true;
+      deadlineRef.current = null;
+      setRunning(false);
+      if (mode === "focus") setCycles((count) => count + 1);
+      setCompletion(mode);
+      notify(mode === "focus" ? "¡Sesión terminada! Tómate un descanso." : "Descanso terminado. ¿Listo para enfocarte?");
+    };
+    updateCountdown();
+    const timer = window.setInterval(updateCountdown, 200);
     return () => window.clearInterval(timer);
-  }, [running]);
-  useEffect(() => {
-    if (!running || secondsLeft !== 0) return;
+  }, [running, mode, notify]);
+  function stopTimer() {
+    if (deadlineRef.current !== null) {
+      setSecondsLeft(Math.max(0, Math.ceil((deadlineRef.current - Date.now()) / 1000)));
+      deadlineRef.current = null;
+    }
     setRunning(false);
-    if (mode === "focus") setCycles((count) => count + 1);
-    setCompletion(mode);
-    notify(mode === "focus" ? "¡Sesión terminada! Tómate un descanso." : "Descanso terminado. ¿Listo para enfocarte?");
-  }, [secondsLeft, running, mode, notify]);
-  function switchMode(nextMode) { setRunning(false); setCompletion(""); setMode(nextMode); setSecondsLeft((nextMode === "focus" ? settings.focus : breakMinutes) * 60); }
-  function reset() { setRunning(false); setCompletion(""); setSecondsLeft((mode === "focus" ? settings.focus : breakMinutes) * 60); }
-  function updateSetting(name, value) { const updated = { ...settings, [name]: Number(value) }; setSettings(updated); if (name === "focus" && mode === "focus" && !running) setSecondsLeft(Number(value) * 60); }
-  function startBreak() { setCompletion(""); setMode("break"); setSecondsLeft(breakMinutes * 60); }
-  function repeatFocus() { setCompletion(""); setMode("focus"); setSecondsLeft(settings.focus * 60); }
-  function finishForToday() { setCompletion(""); setMode("focus"); setSecondsLeft(settings.focus * 60); }
+  }
+  function toggleTimer() {
+    if (running) {
+      stopTimer();
+      return;
+    }
+    setCompletion("");
+    completionHandledRef.current = false;
+    if (secondsLeft <= 0) {
+      const duration = totalSeconds;
+      setSecondsLeft(duration);
+      deadlineRef.current = Date.now() + duration * 1000;
+      setRunning(true);
+      return;
+    }
+    deadlineRef.current = Date.now() + secondsLeft * 1000;
+    setRunning(true);
+  }
+  function switchMode(nextMode) { stopTimer(); completionHandledRef.current = false; setCompletion(""); setMode(nextMode); setSecondsLeft((nextMode === "focus" ? safeSettings.focus : breakMinutes) * 60); }
+  function reset() { stopTimer(); completionHandledRef.current = false; setCompletion(""); setSecondsLeft((mode === "focus" ? safeSettings.focus : breakMinutes) * 60); }
+  function updateSetting(name, value) {
+    const limits = { focus: [1, 180], short: [1, 60], long: [1, 90], cycles: [2, 8] };
+    const number = Number(value);
+    const [min, max] = limits[name];
+    const updated = { ...safeSettings, [name]: Math.min(max, Math.max(min, Number.isFinite(number) ? number : min)) };
+    setSettings(updated);
+    if (!running && name === "focus" && mode === "focus") setSecondsLeft(updated.focus * 60);
+    if (!running && mode === "break" && name === "short") setSecondsLeft((longBreak ? updated.long : updated.short) * 60);
+    if (!running && mode === "break" && name === "long" && longBreak) setSecondsLeft(updated.long * 60);
+  }
+  function startBreak() { completionHandledRef.current = false; setCompletion(""); setMode("break"); setSecondsLeft(breakMinutes * 60); }
+  function repeatFocus() { completionHandledRef.current = false; setCompletion(""); setMode("focus"); setSecondsLeft(safeSettings.focus * 60); }
+  function finishForToday() { completionHandledRef.current = false; setCompletion(""); setMode("focus"); setSecondsLeft(safeSettings.focus * 60); }
   function choosePreset(name, focus, short, long) {
+    completionHandledRef.current = false;
     setPreset(name);
-    setSettings({ ...settings, focus, short, long });
+    setSettings({ ...safeSettings, focus, short, long });
     setMode("focus");
     setCompletion("");
     if (!running) setSecondsLeft(focus * 60);
   }
   const progress = Math.max(0, Math.min(100, (1 - secondsLeft / Math.max(totalSeconds, 1)) * 100));
-  const displayedCycle = cycles % settings.cycles || (cycles > 0 ? settings.cycles : 0);
+  const displayedCycle = cycles % safeSettings.cycles || (cycles > 0 ? safeSettings.cycles : 0);
   return <>
     <PageHeading eyebrow="CONCENTRACIÓN AMABLE" title="Pomodoro" subtitle="Concéntrate un rato, descansa un poco. Repite cuando estés listo." action={<button className="icon-button settings-trigger" onClick={() => setShowSettings(!showSettings)} aria-label="Ajustes">☷</button>} />
-    <div className="pomodoro-layout"><section className="panel timer-panel"><div className="timer-tabs"><button className={mode === "focus" ? "selected" : ""} onClick={() => switchMode("focus")}>Enfoque</button><button className={mode === "break" ? "selected" : ""} onClick={() => switchMode("break")}>Descanso</button></div><div className="timer-presets"><span>Sesión rápida</span>{[["25 / 5", 25, 5, 15], ["50 / 10", 50, 10, 20], ["3 h / 30", 180, 30, 30]].map(([name, focus, short, long]) => <button key={name} className={preset === name ? "selected" : ""} disabled={running} onClick={() => choosePreset(name, focus, short, long)}>{name} min</button>)}</div>
-      <div className="timer-content"><div className="timer-ring" style={{ "--progress": `${progress}%` }}><div className="timer-inner"><span>{mode === "focus" ? "TIEMPO DE ENFOQUE" : "TÓMATE UN RESPIRO"}</span><strong>{String(Math.floor(secondsLeft / 60)).padStart(2, "0")}:{String(secondsLeft % 60).padStart(2, "0")}</strong><small>{mode === "focus" ? "Estás haciendo un buen trabajo ✦" : "Deja que tu mente descanse"}</small><button className="timer-play" onClick={() => { if (secondsLeft === 0) reset(); else setRunning(!running); }} aria-label={running ? "Pausar" : "Comenzar"}>{running ? "Ⅱ" : "▶"}</button></div></div><button className="timer-reset" onClick={reset}>↻ Reiniciar</button></div>
-      {completion && <div className="timer-completion"><strong>{completion === "focus" ? "¡Buen trabajo! Tu sesión terminó." : "Descanso terminado."}</strong><p>{completion === "focus" ? `Has completado ${displayedCycle} de ${settings.cycles} sesiones.` : "¿Continuamos con una nueva sesión de enfoque?"}</p><div>{completion === "focus" ? <button className="button" onClick={startBreak}>{longBreak ? "Tomar descanso largo" : "Tomar descanso"}</button> : <button className="button" onClick={repeatFocus}>Repetir enfoque</button>}<button className="button button-secondary" onClick={finishForToday}>Terminar por hoy</button></div></div>}
-      <div className="timer-progress"><div><strong>{displayedCycle}<small>/{settings.cycles}</small></strong><span>sesiones</span></div><div className="cycle-dots">{Array.from({ length: settings.cycles }, (_, index) => <i key={index} className={index < displayedCycle ? "done" : ""} />)}</div><div><strong>{Math.floor(cycles * settings.focus / 60)}<small>h</small> {cycles * settings.focus % 60}<small>m</small></strong><span>tiempo enfocado</span></div></div>
-    </section><aside className="pomodoro-aside"><div className="focus-quote"><span>✦</span><h2>Presente en<br />este momento.</h2><p>No necesitas terminarlo todo. Solo empezar por algo.</p><small>UN RESPIRO A LA VEZ</small></div><div className="panel timer-tips"><span className="eyebrow">TU CICLO</span><div><i className="tip-dot focus" /><span>Enfoque</span><strong>{settings.focus} min</strong></div><div><i className="tip-dot break" /><span>Descanso corto</span><strong>{settings.short} min</strong></div><div><i className="tip-dot long" /><span>Descanso largo</span><strong>{settings.long} min</strong></div></div></aside></div>
-    {showSettings && <div className="settings-popover panel"><div className="section-title"><h2>Duración de ciclos</h2><button className="delete-button" onClick={() => setShowSettings(false)}>×</button></div><label>Enfoque <input type="number" min="1" max="180" value={settings.focus} onChange={(event) => updateSetting("focus", event.target.value)} /></label><label>Descanso corto <input type="number" min="1" max="60" value={settings.short} onChange={(event) => updateSetting("short", event.target.value)} /></label><label>Descanso largo <input type="number" min="1" max="90" value={settings.long} onChange={(event) => updateSetting("long", event.target.value)} /></label><label>Sesiones antes del descanso largo <input type="number" min="2" max="8" value={settings.cycles} onChange={(event) => updateSetting("cycles", event.target.value)} /></label></div>}
+    <div className="pomodoro-layout"><section className="panel timer-panel"><div className="timer-tabs"><button type="button" className={mode === "focus" ? "selected" : ""} onClick={() => switchMode("focus")}>Enfoque</button><button type="button" className={mode === "break" ? "selected" : ""} onClick={() => switchMode("break")}>Descanso</button></div><div className="timer-presets"><span>Sesión rápida</span>{[["25 / 5", 25, 5, 15], ["50 / 10", 50, 10, 20], ["3 h / 30", 180, 30, 30]].map(([name, focus, short, long]) => <button type="button" key={name} className={preset === name ? "selected" : ""} disabled={running} onClick={() => choosePreset(name, focus, short, long)}>{name} min</button>)}</div>
+      <div className="timer-content"><div className="timer-ring" style={{ "--progress": `${progress}%` }}><div className="timer-inner"><span>{mode === "focus" ? "TIEMPO DE ENFOQUE" : "TÓMATE UN RESPIRO"}</span><strong className="timer-display" role="timer" aria-live="off" aria-label={`${Math.floor(secondsLeft / 60)} minutos y ${secondsLeft % 60} segundos`}>{String(Math.floor(secondsLeft / 60)).padStart(2, "0")}:{String(secondsLeft % 60).padStart(2, "0")}</strong><small>{running ? "Sesión en curso" : mode === "focus" ? "Estás haciendo un buen trabajo ✦" : "Deja que tu mente descanse"}</small><button type="button" className="timer-play" onClick={toggleTimer} aria-label={running ? "Pausar temporizador" : "Iniciar temporizador"}>{running ? "Pausar" : secondsLeft === 0 ? "Reiniciar" : "Iniciar"}</button></div></div><button type="button" className="timer-reset" onClick={reset}>↻ Reiniciar</button></div>
+      {completion && <div className="timer-completion"><strong>{completion === "focus" ? "¡Buen trabajo! Tu sesión terminó." : "Descanso terminado."}</strong><p>{completion === "focus" ? `Has completado ${displayedCycle} de ${safeSettings.cycles} sesiones.` : "¿Continuamos con una nueva sesión de enfoque?"}</p><div>{completion === "focus" ? <button type="button" className="button" onClick={startBreak}>{longBreak ? "Tomar descanso largo" : "Tomar descanso"}</button> : <button type="button" className="button" onClick={repeatFocus}>Repetir enfoque</button>}<button type="button" className="button button-secondary" onClick={finishForToday}>Terminar por hoy</button></div></div>}
+      <div className="timer-progress"><div><strong>{displayedCycle}<small>/{safeSettings.cycles}</small></strong><span>sesiones</span></div><div className="cycle-dots">{Array.from({ length: safeSettings.cycles }, (_, index) => <i key={index} className={index < displayedCycle ? "done" : ""} />)}</div><div><strong>{Math.floor(cycles * safeSettings.focus / 60)}<small>h</small> {cycles * safeSettings.focus % 60}<small>m</small></strong><span>tiempo enfocado</span></div></div>
+    </section><aside className="pomodoro-aside"><div className="focus-quote"><span>✦</span><h2>Presente en<br />este momento.</h2><p>No necesitas terminarlo todo. Solo empezar por algo.</p><small>UN RESPIRO A LA VEZ</small></div><div className="panel timer-tips"><span className="eyebrow">TU CICLO</span><div><i className="tip-dot focus" /><span>Enfoque</span><strong>{safeSettings.focus} min</strong></div><div><i className="tip-dot break" /><span>Descanso corto</span><strong>{safeSettings.short} min</strong></div><div><i className="tip-dot long" /><span>Descanso largo</span><strong>{safeSettings.long} min</strong></div></div></aside></div>
+    {showSettings && <div className="settings-popover panel"><div className="section-title"><h2>Duración de ciclos</h2><button type="button" className="delete-button" onClick={() => setShowSettings(false)}>×</button></div><label>Enfoque <input type="number" min="1" max="180" value={safeSettings.focus} onChange={(event) => updateSetting("focus", event.target.value)} /></label><label>Descanso corto <input type="number" min="1" max="60" value={safeSettings.short} onChange={(event) => updateSetting("short", event.target.value)} /></label><label>Descanso largo <input type="number" min="1" max="90" value={safeSettings.long} onChange={(event) => updateSetting("long", event.target.value)} /></label><label>Sesiones antes del descanso largo <input type="number" min="2" max="8" value={safeSettings.cycles} onChange={(event) => updateSetting("cycles", event.target.value)} /></label></div>}
   </>;
 }
 function StudyPage({ streak, setStreak, studiedToday, setStudiedToday, notify }) {
