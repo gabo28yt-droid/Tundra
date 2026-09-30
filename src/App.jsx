@@ -248,10 +248,13 @@ function authErrorMessage(error) {
     "auth/popup-blocked": "Tu navegador bloqueó la ventana. Permite ventanas emergentes e inténtalo de nuevo.",
     "auth/unauthorized-domain": "Este dominio no está autorizado en Firebase Authentication.",
     "auth/operation-not-allowed": "Activa este método de inicio de sesión en Firebase Console > Authentication > Sign-in method.",
+    "auth/configuration-not-found": "No está configurado este método de inicio de sesión. Activa Google o Correo/contraseña en Firebase Console > Authentication.",
+    "auth/api-key-not-valid.-please-pass-a-valid-api-key.": "La clave web de Firebase no es válida o está restringida. Revisa la clave de la app web en Firebase y sus restricciones de API.",
     "auth/too-many-requests": "Hubo demasiados intentos. Espera un momento antes de volver a intentarlo.",
     "auth/network-request-failed": "No se pudo conectar. Revisa tu conexión a internet.",
   };
-  return messages[error.code] || "No se pudo completar el acceso. Revisa la configuración de Firebase e inténtalo de nuevo.";
+  const explanation = messages[error.code] || "No se pudo completar el acceso. Revisa la configuración de Firebase e inténtalo de nuevo.";
+  return error.code ? `${explanation} (Código: ${error.code})` : explanation;
 }
 
 function AuthPage({ configurationMissing = false, externalError = "" }) {
