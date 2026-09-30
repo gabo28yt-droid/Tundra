@@ -22,7 +22,7 @@ const NAV_ITEMS = [
   { id: "pomodoro", label: "Pomodoro", icon: "◉" },
   { id: "estudio", label: "Estudio", icon: "✳" },
 ];
-const COLORS = ["#8765e8", "#f08aa4", "#f6b74d", "#4dbdae", "#6d9ce9", "#f28a50"];
+const COLORS = ["#68507B", "#8D7694", "#40315C", "#B3A8BA", "#28193D", "#D9D9D9"];
 const CATEGORIES = ["Estudio", "Hogar", "Trabajo", "Personal"];
 const EMPTY_LIST = [];
 const DEFAULT_TIMER_SETTINGS = { focus: 25, short: 5, long: 15, cycles: 3 };
