@@ -7,6 +7,7 @@ import {
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
   signOut,
   updateProfile,
 } from "firebase/auth";
@@ -301,9 +302,20 @@ function AuthPage({ configurationMissing = false, externalError = "" }) {
     try {
       await signInWithPopup(auth, new GoogleAuthProvider());
     } catch (loginError) {
+      if (loginError.code === "auth/popup-blocked") {
+        try {
+          await signInWithRedirect(auth, new GoogleAuthProvider());
+          return;
+        } catch (redirectError) {
+          setError(authErrorMessage(redirectError));
+          setBusy(false);
+          return;
+        }
+      }
       setError(authErrorMessage(loginError));
-    } finally {
       setBusy(false);
+    } finally {
+      if (auth.currentUser) setBusy(false);
     }
   }
 
