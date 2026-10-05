@@ -239,11 +239,11 @@ function PersonalApp({ user }) {
 }
 
 const PET_MOODS = [
-  { name: "feliz", message: "¡Qué gusto verte!" },
-  { name: "emocionada", message: "¡Sí, tú puedes!" },
-  { name: "enamorada", message: "¡Te quiero!" },
-  { name: "guiño", message: "¡Vas genial!" },
-  { name: "sorprendida", message: "¡Oh, hola!" },
+  { name: "tranquilo", message: "Un paso a la vez." },
+  { name: "celebrando", message: "¡Pendiente listo, mente más ligera!" },
+  { name: "enfocado", message: "Vamos con lo importante." },
+  { name: "guiño", message: "Tu ritmo también cuenta." },
+  { name: "pensando", message: "¿Una pausa antes de seguir?" },
 ];
 
 function PetCompanion() {
@@ -253,7 +253,7 @@ function PetCompanion() {
   }));
   const positionRef = useRef(position);
   const [moodIndex, setMoodIndex] = useState(0);
-  const [bubble, setBubble] = useState("¡Arrástrame!");
+  const [bubble, setBubble] = useState("Un paso a la vez.");
   const dragRef = useRef(null);
   const bubbleTimerRef = useRef(0);
   const mood = PET_MOODS[moodIndex];
@@ -314,8 +314,8 @@ function PetCompanion() {
       type="button"
       className={`pet-companion pet-${mood.name}`}
       style={{ left: position.x, top: position.y }}
-      aria-label={`Mascota Tundra: ${mood.name}. Tócame o arrástrame por la pantalla.`}
-      title="Tócame para cambiar su emoción o arrástrame por la pantalla"
+      aria-label={`Pingüino de Tundra: ${mood.name}. Toca o arrastra para interactuar.`}
+      title="Toca para cambiar su ánimo o arrástrame por la pantalla"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={(event) => {
@@ -327,43 +327,51 @@ function PetCompanion() {
       {bubble && <span className="pet-bubble" aria-hidden="true">{bubble}</span>}
       <svg className="pet-art" viewBox="0 0 88 88" aria-hidden="true">
         <defs>
-          <linearGradient id="pet-coat" x1="12%" y1="0%" x2="90%" y2="100%">
+          <linearGradient id="penguin-coat" x1="12%" y1="0%" x2="90%" y2="100%">
             <stop offset="0%" stopColor="#B3A8BA" />
-            <stop offset="100%" stopColor="#68507B" />
+            <stop offset="100%" stopColor="#40315C" />
           </linearGradient>
         </defs>
         <ellipse cx="45" cy="79" rx="24" ry="4" fill="#28193D" opacity=".12" />
-        <path className="pet-tail" d="M66 59c12-1 16 6 10 12-3 3-7 2-8-1" fill="none" stroke="#8D7694" strokeWidth="5" strokeLinecap="round" />
-        <path className="pet-body" d="M19 35 21 20c.4-3 3-4 5-2l10 9c5-2 11-2 16 0l10-9c2-2 4.6-1 5 2l2 15c4 5 6 11 5 18-1 14-12 23-29 23S17 67 16 53c-1-7 0-13 3-18Z" fill="url(#pet-coat)" />
-        <path d="M25 23l8 7-7 2Z" fill="#D9D1DE" opacity=".85" />
-        <path d="m63 23-8 7 7 2Z" fill="#D9D1DE" opacity=".85" />
-        <circle cx="31" cy="55" r="5" fill="#EAA4B2" opacity=".55" />
-        <circle cx="58" cy="55" r="5" fill="#EAA4B2" opacity=".55" />
-        {mood.name === "enamorada" ? (
+        <path className="pet-wing pet-wing-left" d="M23 40c-8 4-11 14-7 24 2 4 5 4 8 0l7-12Z" fill="#68507B" />
+        <path className="pet-wing pet-wing-right" d="M65 40c8 4 11 14 7 24-2 4-5 4-8 0l-7-12Z" fill="#68507B" />
+        <path className="pet-body" d="M44 14c-18 0-29 14-29 36 0 17 10 27 29 27s29-10 29-27C73 28 62 14 44 14Z" fill="url(#penguin-coat)" />
+        <path d="M44 38c-12 0-18 10-18 23 0 10 7 16 18 16s18-6 18-16c0-13-6-23-18-23Z" fill="#F7F4F6" />
+        <path className="pet-feet" d="M31 73c-5 0-9 3-10 6 5 2 12 2 17 0l-2-5Zm26 0c5 0 9 3 10 6-5 2-12 2-17 0l2-5Z" fill="#D99A72" />
+        {mood.name === "enfocado" ? (
           <>
-            <path d="M29 43c0-4 6-5 7 0 1-5 7-4 7 0 0 4-7 8-7 8s-7-4-7-8Zm17 0c0-4 6-5 7 0 1-5 7-4 7 0 0 4-7 8-7 8s-7-4-7-8Z" fill="#F8D8E2" />
+            <circle cx="36" cy="35" r="2.4" fill="#28193D" />
+            <circle cx="52" cy="35" r="2.4" fill="#28193D" />
+            <path d="m39 43 5 4 5-4c-1-4-9-4-10 0Z" fill="#D99A72" />
           </>
         ) : mood.name === "guiño" ? (
           <>
-            <circle cx="36" cy="46" r="2.5" fill="#28193D" />
-            <path d="M49 46q5 5 10 0" fill="none" stroke="#28193D" strokeWidth="2.5" strokeLinecap="round" />
+            <circle cx="36" cy="35" r="2.5" fill="#28193D" />
+            <path d="M48 35q4 4 8 0" fill="none" stroke="#28193D" strokeWidth="2.3" strokeLinecap="round" />
+            <path d="m39 43 5 4 5-4c-1-4-9-4-10 0Z" fill="#D99A72" />
           </>
-        ) : mood.name === "sorprendida" ? (
+        ) : mood.name === "pensando" ? (
           <>
-            <circle cx="36" cy="45" r="3.3" fill="#28193D" />
-            <circle cx="53" cy="45" r="3.3" fill="#28193D" />
+            <circle cx="36" cy="35" r="2.5" fill="#28193D" />
+            <circle cx="52" cy="34" r="2.5" fill="#28193D" />
+            <path d="m40 44 4 3 4-3c0-3-8-3-8 0Z" fill="#D99A72" />
+            <circle cx="66" cy="19" r="3" fill="#B3A8BA" />
+            <circle cx="72" cy="13" r="2" fill="#B3A8BA" />
+          </>
+        ) : mood.name === "celebrando" ? (
+          <>
+            <path d="M32 35q4-5 8 0M48 35q4-5 8 0" fill="none" stroke="#28193D" strokeWidth="2.4" strokeLinecap="round" />
+            <path d="m39 43 5 4 5-4c-1-4-9-4-10 0Z" fill="#D99A72" />
+            <path d="m12 28 2-3 2 3 3 2-3 2-2 3-2-3-3-2Zm61 8 1.5-3 1.5 3 3 1.5-3 1.5-1.5 3-1.5-3-3-1.5Z" fill="#B3A8BA" />
           </>
         ) : (
           <>
-            <path d="M32 46q4-5 8 0M49 46q4-5 8 0" fill="none" stroke="#28193D" strokeWidth="2.4" strokeLinecap="round" />
+            <path d="M32 35q4-4 8 0M48 35q4-4 8 0" fill="none" stroke="#28193D" strokeWidth="2.4" strokeLinecap="round" />
+            <path d="m39 43 5 4 5-4c-1-4-9-4-10 0Z" fill="#D99A72" />
           </>
         )}
-        {mood.name === "sorprendida"
-          ? <ellipse cx="45" cy="57" rx="3.5" ry="4.5" fill="#40315C" />
-          : <path d={mood.name === "emocionada" ? "M38 55q7 11 14 0" : "M39 56q6 7 12 0"} fill="none" stroke="#40315C" strokeWidth="2.4" strokeLinecap="round" />}
-        {mood.name === "emocionada" && <path d="m14 29 2-4 2 4 4 2-4 2-2 4-2-4-4-2Zm56 3 1.5-3 1.5 3 3 1.5-3 1.5-1.5 3-1.5-3-3-1.5Z" fill="#B3A8BA" />}
       </svg>
-      <span className="pet-hint" aria-hidden="true">Tócame ✦</span>
+      <span className="pet-hint" aria-hidden="true">Pingüino ✦</span>
     </button>
   );
 }
