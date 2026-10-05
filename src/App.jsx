@@ -232,8 +232,139 @@ function PersonalApp({ user }) {
       <nav className="mobile-nav" aria-label="Navegación principal">
         {NAV_ITEMS.map((item) => <button key={item.id} onClick={() => navigate(item.id)} className={active === item.id ? "active" : ""} aria-current={active === item.id ? "page" : undefined}><span>{item.icon}</span>{item.label}</button>)}
       </nav>
+      <PetCompanion />
       <span className="sr-only">{todayKey}</span>
     </div>
+  );
+}
+
+const PET_MOODS = [
+  { name: "feliz", message: "¡Qué gusto verte!" },
+  { name: "emocionada", message: "¡Sí, tú puedes!" },
+  { name: "enamorada", message: "¡Te quiero!" },
+  { name: "guiño", message: "¡Vas genial!" },
+  { name: "sorprendida", message: "¡Oh, hola!" },
+];
+
+function PetCompanion() {
+  const [position, setPosition] = useState(() => ({
+    x: Math.max(8, window.innerWidth - 92),
+    y: Math.max(8, window.innerHeight - 174),
+  }));
+  const positionRef = useRef(position);
+  const [moodIndex, setMoodIndex] = useState(0);
+  const [bubble, setBubble] = useState("¡Arrástrame!");
+  const dragRef = useRef(null);
+  const bubbleTimerRef = useRef(0);
+  const mood = PET_MOODS[moodIndex];
+
+  useEffect(() => {
+    bubbleTimerRef.current = window.setTimeout(() => setBubble(""), 3500);
+    const keepPetInView = () => {
+      const next = {
+        x: Math.max(8, Math.min(positionRef.current.x, window.innerWidth - 84)),
+        y: Math.max(8, Math.min(positionRef.current.y, window.innerHeight - 94)),
+      };
+      positionRef.current = next;
+      setPosition(next);
+    };
+    window.addEventListener("resize", keepPetInView);
+    return () => {
+      window.clearTimeout(bubbleTimerRef.current);
+      window.removeEventListener("resize", keepPetInView);
+    };
+  }, []);
+
+  function showNextMood() {
+    setMoodIndex((current) => (current + 1) % PET_MOODS.length);
+    setBubble(PET_MOODS[(moodIndex + 1) % PET_MOODS.length].message);
+    window.clearTimeout(bubbleTimerRef.current);
+    bubbleTimerRef.current = window.setTimeout(() => setBubble(""), 1800);
+  }
+
+  function handlePointerDown(event) {
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragRef.current = {
+      pointerId: event.pointerId,
+      offsetX: event.clientX - positionRef.current.x,
+      offsetY: event.clientY - positionRef.current.y,
+    };
+    showNextMood();
+  }
+
+  function handlePointerMove(event) {
+    if (!dragRef.current || dragRef.current.pointerId !== event.pointerId) return;
+    const next = {
+      x: Math.max(8, Math.min(event.clientX - dragRef.current.offsetX, window.innerWidth - 84)),
+      y: Math.max(8, Math.min(event.clientY - dragRef.current.offsetY, window.innerHeight - 94)),
+    };
+    positionRef.current = next;
+    setPosition(next);
+  }
+
+  function handleKeyDown(event) {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    showNextMood();
+  }
+
+  return (
+    <button
+      type="button"
+      className={`pet-companion pet-${mood.name}`}
+      style={{ left: position.x, top: position.y }}
+      aria-label={`Mascota Tundra: ${mood.name}. Tócame o arrástrame por la pantalla.`}
+      title="Tócame para cambiar su emoción o arrástrame por la pantalla"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={(event) => {
+        if (dragRef.current?.pointerId === event.pointerId) dragRef.current = null;
+      }}
+      onPointerCancel={() => { dragRef.current = null; }}
+      onKeyDown={handleKeyDown}
+    >
+      {bubble && <span className="pet-bubble" aria-hidden="true">{bubble}</span>}
+      <svg className="pet-art" viewBox="0 0 88 88" aria-hidden="true">
+        <defs>
+          <linearGradient id="pet-coat" x1="12%" y1="0%" x2="90%" y2="100%">
+            <stop offset="0%" stopColor="#B3A8BA" />
+            <stop offset="100%" stopColor="#68507B" />
+          </linearGradient>
+        </defs>
+        <ellipse cx="45" cy="79" rx="24" ry="4" fill="#28193D" opacity=".12" />
+        <path className="pet-tail" d="M66 59c12-1 16 6 10 12-3 3-7 2-8-1" fill="none" stroke="#8D7694" strokeWidth="5" strokeLinecap="round" />
+        <path className="pet-body" d="M19 35 21 20c.4-3 3-4 5-2l10 9c5-2 11-2 16 0l10-9c2-2 4.6-1 5 2l2 15c4 5 6 11 5 18-1 14-12 23-29 23S17 67 16 53c-1-7 0-13 3-18Z" fill="url(#pet-coat)" />
+        <path d="M25 23l8 7-7 2Z" fill="#D9D1DE" opacity=".85" />
+        <path d="m63 23-8 7 7 2Z" fill="#D9D1DE" opacity=".85" />
+        <circle cx="31" cy="55" r="5" fill="#EAA4B2" opacity=".55" />
+        <circle cx="58" cy="55" r="5" fill="#EAA4B2" opacity=".55" />
+        {mood.name === "enamorada" ? (
+          <>
+            <path d="M29 43c0-4 6-5 7 0 1-5 7-4 7 0 0 4-7 8-7 8s-7-4-7-8Zm17 0c0-4 6-5 7 0 1-5 7-4 7 0 0 4-7 8-7 8s-7-4-7-8Z" fill="#F8D8E2" />
+          </>
+        ) : mood.name === "guiño" ? (
+          <>
+            <circle cx="36" cy="46" r="2.5" fill="#28193D" />
+            <path d="M49 46q5 5 10 0" fill="none" stroke="#28193D" strokeWidth="2.5" strokeLinecap="round" />
+          </>
+        ) : mood.name === "sorprendida" ? (
+          <>
+            <circle cx="36" cy="45" r="3.3" fill="#28193D" />
+            <circle cx="53" cy="45" r="3.3" fill="#28193D" />
+          </>
+        ) : (
+          <>
+            <path d="M32 46q4-5 8 0M49 46q4-5 8 0" fill="none" stroke="#28193D" strokeWidth="2.4" strokeLinecap="round" />
+          </>
+        )}
+        {mood.name === "sorprendida"
+          ? <ellipse cx="45" cy="57" rx="3.5" ry="4.5" fill="#40315C" />
+          : <path d={mood.name === "emocionada" ? "M38 55q7 11 14 0" : "M39 56q6 7 12 0"} fill="none" stroke="#40315C" strokeWidth="2.4" strokeLinecap="round" />}
+        {mood.name === "emocionada" && <path d="m14 29 2-4 2 4 4 2-4 2-2 4-2-4-4-2Zm56 3 1.5-3 1.5 3 3 1.5-3 1.5-1.5 3-1.5-3-3-1.5Z" fill="#B3A8BA" />}
+      </svg>
+      <span className="pet-hint" aria-hidden="true">Tócame ✦</span>
+    </button>
   );
 }
 
