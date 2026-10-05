@@ -655,7 +655,9 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   pointer-events: none;
 }
 .pet-body { transform-box: fill-box; transform-origin: center bottom; }
-.pet-tail { transform-box: fill-box; transform-origin: left center; animation: pet-tail-wag 1.7s ease-in-out infinite; }
+.pet-wing { transform-box: fill-box; transform-origin: top center; animation: pet-wing-sway 2.2s ease-in-out infinite; }
+.pet-wing-left { animation-delay: -.3s; }
+.pet-wing-right { animation-delay: -.1s; }
 .pet-bubble {
   position: absolute;
   z-index: 1;
@@ -692,13 +694,13 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   pointer-events: none;
 }
 .pet-companion:hover .pet-hint,.pet-companion:focus-visible .pet-hint { opacity: 1; transform: translate(-50%, 0); }
-.pet-emocionada .pet-art { animation-duration: .75s; }
-.pet-enamorada .pet-body { animation: pet-heartbeat .8s ease-in-out infinite; }
-.pet-guiño .pet-tail { animation-duration: .75s; }
+.pet-celebrando .pet-art { animation-duration: .65s; }
+.pet-celebrando .pet-wing { animation-duration: .5s; }
+.pet-pensando .pet-body { animation: pet-think 1.8s ease-in-out infinite; }
 @keyframes pet-float { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-4px) rotate(2deg); } }
-@keyframes pet-tail-wag { 0%,100% { transform: rotate(-7deg); } 50% { transform: rotate(13deg); } }
-@keyframes pet-heartbeat { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+@keyframes pet-wing-sway { 0%,100% { transform: rotate(-3deg); } 50% { transform: rotate(4deg); } }
+@keyframes pet-think { 0%,100% { transform: rotate(0); } 50% { transform: rotate(2deg); } }
 @keyframes pet-bubble-in { from { opacity: 0; transform: translate(-50%, calc(-100% + 4px)) scale(.92); } to { opacity: 1; transform: translate(-50%, -100%) scale(1); } }
 @media (prefers-reduced-motion: reduce) {
-  .pet-art,.pet-tail,.pet-enamorada .pet-body { animation: none; }
+  .pet-art,.pet-wing,.pet-pensando .pet-body { animation: none; }
 }
